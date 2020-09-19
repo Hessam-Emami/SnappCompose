@@ -11,7 +11,7 @@
         android:theme="@style/Theme.SnappCompose"
         >
         <meta-data android:name="com.google.android.geo.API_KEY"
-            android:value="957892409073-9aj1ikknse151oelikmcr6702gepupqc.apps.googleusercontent.com"/>
+            android:value="${googleMapsKey}"/>
 
         <activity
             android:name=".MainActivity"

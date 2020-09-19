@@ -3,6 +3,11 @@ plugins {
     id 'kotlin-android'
 }
 
+Properties properties = new Properties()
+if (rootProject.file("local.properties").exists()) {
+    properties.load(rootProject.file("local.properties").newDataInputStream())
+}
+
 android {
     compileSdkVersion 30
     buildToolsVersion "30.0.0"
@@ -15,6 +20,8 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        manifestPlaceholders = [ googleMapsKey : properties.getProperty("google.maps.key", "") ]
     }
 
     buildTypes {
@@ -54,11 +61,6 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.3.0-alpha06'
 
     implementation 'com.google.android.libraries.maps:maps:3.1.0-beta'
-
-    // If you are using Places, add all of the dependencies below
-    implementation 'com.google.android.gms:play-services-gcm:17.0.0'
-    implementation 'com.google.auto.value:auto-value-annotations:1.6.2'
-    implementation 'com.google.maps.android:android-maps-utils-v3:1.3.1'
 
     testImplementation 'junit:junit:4.+'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
