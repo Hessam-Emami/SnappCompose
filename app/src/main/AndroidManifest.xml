@@ -8,7 +8,11 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.SnappCompose">
+        android:theme="@style/Theme.SnappCompose"
+        >
+        <meta-data android:name="com.google.android.geo.API_KEY"
+            android:value="957892409073-9aj1ikknse151oelikmcr6702gepupqc.apps.googleusercontent.com"/>
+
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
