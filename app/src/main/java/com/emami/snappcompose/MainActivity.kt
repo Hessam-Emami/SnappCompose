@@ -3,9 +3,12 @@ package com.emami.snappcompose
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.Indication
+import androidx.compose.foundation.InteractionState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Stack
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,6 +20,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.ui.tooling.preview.Preview
 import com.emami.snappcompose.ui.SnappComposeTheme
 import com.google.android.libraries.maps.CameraUpdateFactory
+import com.google.android.libraries.maps.model.BitmapDescriptor
+import com.google.android.libraries.maps.model.BitmapDescriptorFactory
 import com.google.android.libraries.maps.model.LatLng
 import com.google.android.libraries.maps.model.MarkerOptions
 
@@ -44,25 +49,31 @@ fun HomeScreen() {
                         position, 15.0f
                     )
                 )
-
             }
         }
+        //TODO add marker animation
         MapPointer(Modifier.gravity(Alignment.Center)) {
             map.getMapAsync {
                 val target = it.cameraPosition.target
-                it.addMarker(MarkerOptions().position(target))
+                it.addMarker(
+                    MarkerOptions().position(target)
+                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_location_marker_start))
+                )
             }
         }
     }
 }
 
+//TODO add the missing circle on the bottom of pointer
+//TODO animate on drag
+//TODO remove click ripple
 @Composable
 fun MapPointer(modifier: Modifier = Modifier, onClick: () -> Unit) {
     Image(
         asset = imageResource(id = R.drawable.ic_location_start_pointer),
-        modifier = modifier
-            .clickable(onClick = onClick).padding(16.dp), contentScale = FixedScale(.8f)
-
+        modifier = modifier.padding(bottom = 52.dp)
+            .clickable(onClick = onClick)
+            .size(32.dp, 64.dp),
     )
 
 }
