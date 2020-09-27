@@ -75,7 +75,7 @@ fun MapPointer(modifier: Modifier = Modifier, onClick: () -> Unit) {
         Image(
             asset = imageResource(id = R.drawable.ic_location_start_pointer),
             modifier = Modifier
-                .clickable(onClick = onClick)
+                .clickable(onClick = onClick, indication = null)
                 .size(32.dp, 64.dp),
         )
     }
