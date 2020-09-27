@@ -2,17 +2,17 @@ package com.emami.snappcompose
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.Box
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.Indication
-import androidx.compose.foundation.InteractionState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Stack
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.FixedScale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.unit.dp
@@ -20,7 +20,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.ui.tooling.preview.Preview
 import com.emami.snappcompose.ui.SnappComposeTheme
 import com.google.android.libraries.maps.CameraUpdateFactory
-import com.google.android.libraries.maps.model.BitmapDescriptor
 import com.google.android.libraries.maps.model.BitmapDescriptorFactory
 import com.google.android.libraries.maps.model.LatLng
 import com.google.android.libraries.maps.model.MarkerOptions
@@ -52,7 +51,7 @@ fun HomeScreen() {
             }
         }
         //TODO add marker animation
-        MapPointer(Modifier.gravity(Alignment.Center)) {
+        MapPointer(Modifier.gravity(Alignment.Center).padding(bottom = 52.dp)) {
             map.getMapAsync {
                 val target = it.cameraPosition.target
                 it.addMarker(
@@ -64,17 +63,22 @@ fun HomeScreen() {
     }
 }
 
-//TODO add the missing circle on the bottom of pointer
 //TODO animate on drag
 //TODO remove click ripple
 @Composable
 fun MapPointer(modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Image(
-        asset = imageResource(id = R.drawable.ic_location_start_pointer),
-        modifier = modifier.padding(bottom = 52.dp)
-            .clickable(onClick = onClick)
-            .size(32.dp, 64.dp),
-    )
+    Stack(modifier) {
+        Box(
+            shape = CircleShape, backgroundColor = Color.Gray.copy(alpha = .3f),
+            modifier = Modifier.size(24.dp).gravity(Alignment.BottomCenter)
+        )
+        Image(
+            asset = imageResource(id = R.drawable.ic_location_start_pointer),
+            modifier = Modifier
+                .clickable(onClick = onClick)
+                .size(32.dp, 64.dp),
+        )
+    }
 
 }
 
