@@ -26,37 +26,48 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.ui.tooling.preview.Preview
 import com.emami.snappcompose.ui.SnappComposeTheme
 import com.google.android.libraries.maps.CameraUpdateFactory
-import com.google.android.libraries.maps.model.BitmapDescriptorFactory
-import com.google.android.libraries.maps.model.CameraPosition
-import com.google.android.libraries.maps.model.LatLng
-import com.google.android.libraries.maps.model.MarkerOptions
+import com.google.android.libraries.maps.model.*
 import kotlin.random.Random
 
 class MainActivity : AppCompatActivity() {
+    val pointerState: MutableState<PointerState> =
+        mutableStateOf(PointerState.ORIGIN(LatLng("35.6892".toDouble(), "51.3890".toDouble())))
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             SnappComposeTheme {
-                HomeScreen()
+                HomeScreen(pointerState = pointerState)
+            }
+
+        }
+    }
+
+    override fun onBackPressed() {
+        when (pointerState.value) {
+            is PointerState.ORIGIN -> super.onBackPressed()
+            is PointerState.DESTINATION, is PointerState.PICKED -> pointerState.value =
+                PointerState.CLEAR(pointerState.value.initialLocation)
+            is PointerState.CLEAR -> {
+                //Do nothing for now
             }
         }
     }
 }
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(pointerState: MutableState<PointerState>) {
     val map = rememberMapViewWithLifecycle()
     val buttonState = remember { mutableStateOf(MapPointerMovingState.DRAGGING) }
-    val pointerState = remember { mutableStateOf(PointerState.ORIGIN) }
     val zoomLevel = remember { 17f }
     //Location of Tehran- Iran
-    var position = LatLng("35.6892".toDouble(), "51.3890".toDouble())
     Stack {
         AndroidView({ map }) { mapView ->
             mapView.getMapAsync {
+
                 it.animateCamera(
                     CameraUpdateFactory.newLatLngZoom(
-                        position, zoomLevel
+                        pointerState.value.initialLocation, zoomLevel
                     )
                 )
                 //Though its strange, i had to swap..
@@ -69,42 +80,74 @@ fun HomeScreen() {
             }
         }
         AnimatedMapPointer(
-            modifier = Modifier.gravity(Alignment.Center).padding(bottom = 52.dp), buttonState,pointerState = pointerState
+            modifier = Modifier.gravity(Alignment.Center).padding(bottom = 52.dp),
+            buttonState,
+            pointerState = pointerState
         ) {
 
             map.getMapAsync {
                 val target = it.cameraPosition.target
-                position = target
-                it.addMarker(
+                pointerState.value.initialLocation = target
+                val marker = it.addMarker(
                     MarkerOptions().position(target)
-                        .icon(BitmapDescriptorFactory.fromResource(if (pointerState.value == PointerState.ORIGIN) R.drawable.ic_location_marker_origin else R.drawable.ic_location_marker_destination))
+                        .icon(BitmapDescriptorFactory.fromResource(if (pointerState.value is PointerState.ORIGIN) R.drawable.ic_location_marker_origin else R.drawable.ic_location_marker_destination))
                 )
                 val rand = Random.nextBoolean()
                 val xRand = Random.nextInt(150, 300).toFloat()
                 val yRand = Random.nextInt(150, 300).toFloat()
                 it.moveCamera(
                     CameraUpdateFactory.scrollBy(
-                        if (rand) xRand*1f else xRand*-1f , if (!rand) yRand*1f else yRand*-1f
+                        if (rand) xRand * 1f else xRand * -1f,
+                        if (!rand) yRand * 1f else yRand * -1f
                     )
                 )
                 it.animateCamera(CameraUpdateFactory.zoomBy(-0.5f))
                 pointerState.value =
-                    if (pointerState.value == PointerState.ORIGIN) PointerState.DESTINATION else PointerState.ORIGIN
+                    if (pointerState.value is PointerState.ORIGIN) PointerState.DESTINATION(
+                        (pointerState.value as PointerState.ORIGIN).initialLocation,
+                        marker
+                    ) else PointerState.ORIGIN(LatLng("35.6892".toDouble(), "51.3890".toDouble()))
             }
 
         }
     }
+    if (pointerState.value is PointerState.CLEAR) {
+        map.getMapAsync { it.clear() }
+        pointerState.value = PointerState.ORIGIN(pointerState.value.initialLocation)
+    }
 }
 
-enum class PointerState {
-    ORIGIN, DESTINATION
+/**
+ * @property ORIGIN, when the user first starts to pick a location
+ * @property DESTINATION, happens after Origin
+ * @property PICKED, happens when the picking is finished and we go to calculation state.
+ */
+sealed class PointerState(var initialLocation: LatLng) {
+    class ORIGIN(initialLocation: LatLng) : PointerState(initialLocation)
+    class DESTINATION(initialLocation: LatLng, originSelectedMarker: Marker) :
+        PointerState(initialLocation)
+
+    class PICKED(
+        initialLocation: LatLng,
+        originSelectedMarker: Marker,
+        destinationSelectedMarker: Marker
+    ) : PointerState(initialLocation)
+
+    class CLEAR(initialLocation: LatLng) : PointerState(initialLocation = initialLocation)
 }
 
 @Composable
 fun MapPointer(
     modifier: Modifier = Modifier,
     transitionState: TransitionState?,
-    pointerState: State<PointerState> = mutableStateOf(PointerState.ORIGIN),
+    pointerState: State<PointerState> = mutableStateOf(
+        PointerState.ORIGIN(
+            LatLng(
+                "35.6892".toDouble(),
+                "51.3890".toDouble()
+            )
+        )
+    ),
     onClick: () -> Unit
 ) {
     Stack(modifier.wrapContentWidth()) {
@@ -115,7 +158,7 @@ fun MapPointer(
                 .gravity(Alignment.BottomCenter)
         )
         Image(
-            asset = imageResource(id = if (pointerState.value == PointerState.ORIGIN) R.drawable.ic_location_pointer_origin else R.drawable.ic_location_pointer_destination),
+            asset = imageResource(id = if (pointerState.value is PointerState.ORIGIN) R.drawable.ic_location_pointer_origin else R.drawable.ic_location_pointer_destination),
             modifier = Modifier
                 .padding(bottom = transitionState!![pointerPaddingProp]).clickable(
                     onClick =
@@ -126,15 +169,15 @@ fun MapPointer(
     }
 
 }
-
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    SnappComposeTheme {
-        HomeScreen()
-    }
-}
+//
+//
+//@Preview(showBackground = true)
+//@Composable
+//fun DefaultPreview() {
+//    SnappComposeTheme {
+//        HomeScreen()
+//    }
+//}
 
 enum class MapPointerMovingState {
     IDLE, DRAGGING
@@ -149,7 +192,14 @@ val pointerPaddingProp = DpPropKey()
 fun AnimatedMapPointer(
     modifier: Modifier = Modifier,
     buttonMovingState: State<MapPointerMovingState> = mutableStateOf(MapPointerMovingState.IDLE),
-    pointerState: State<PointerState> = mutableStateOf(PointerState.ORIGIN),
+    pointerState: State<PointerState> = mutableStateOf(
+        PointerState.ORIGIN(
+            LatLng(
+                "35.6892".toDouble(),
+                "51.3890".toDouble()
+            )
+        )
+    ),
     onClick: () -> Unit = {}
 ) {
     val transitionDefinition = transitionDefinition<MapPointerMovingState> {
