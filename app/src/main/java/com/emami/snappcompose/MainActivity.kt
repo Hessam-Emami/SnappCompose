@@ -1,37 +1,46 @@
 package com.emami.snappcompose
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.DpPropKey
 import androidx.compose.animation.core.TransitionState
 import androidx.compose.animation.core.transitionDefinition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.transition
-import androidx.compose.foundation.Box
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Stack
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.Surface
+import androidx.compose.material.Tab
+import androidx.compose.material.TabRow
+import androidx.compose.material.ripple.RippleIndication
 import androidx.compose.runtime.*
+import androidx.compose.runtime.State
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageAsset
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.ContextAmbient
 import androidx.compose.ui.platform.setContent
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.ui.tooling.preview.Preview
+import com.emami.snappcompose.PointerState.*
 import com.emami.snappcompose.ui.SnappComposeTheme
 import com.google.android.libraries.maps.CameraUpdateFactory
-import com.google.android.libraries.maps.model.*
+import com.google.android.libraries.maps.model.BitmapDescriptorFactory
+import com.google.android.libraries.maps.model.LatLng
+import com.google.android.libraries.maps.model.Marker
+import com.google.android.libraries.maps.model.MarkerOptions
 import kotlin.random.Random
 
 class MainActivity : AppCompatActivity() {
-    val pointerState: MutableState<PointerState> =
-        mutableStateOf(PointerState.ORIGIN(LatLng("35.6892".toDouble(), "51.3890".toDouble())))
+    private val pointerState: MutableState<PointerState> =
+        mutableStateOf(ORIGIN(LatLng("35.6892".toDouble(), "51.3890".toDouble())))
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,12 +54,41 @@ class MainActivity : AppCompatActivity() {
 
     override fun onBackPressed() {
         when (pointerState.value) {
-            is PointerState.ORIGIN -> super.onBackPressed()
-            is PointerState.DESTINATION, is PointerState.PICKED -> pointerState.value =
-                PointerState.CLEAR(pointerState.value.initialLocation)
-            is PointerState.CLEAR -> {
+            is ORIGIN -> super.onBackPressed()
+            is DESTINATION, is PICKED -> pointerState.value =
+                CLEAR(pointerState.value.initialLocation)
+            is CLEAR -> {
                 //Do nothing for now
             }
+        }
+    }
+}
+
+@Composable
+fun IconButton(
+    modifier: Modifier = Modifier,
+    asset: ImageAsset,
+    shape: Shape = CircleShape,
+    onClick: () -> Unit
+) {
+    Surface(
+        elevation = 4.dp,
+        modifier = modifier.size(56.dp).clickable(
+            onClick = onClick,
+            indication = RippleIndication(bounded = false, radius = 28.dp)
+        ),
+        shape = shape
+    ) {
+        Box(
+            backgroundColor = colorResource(id = R.color.white),
+            gravity = Alignment.Center,
+        ) {
+
+            Icon(
+                tint = colorResource(id = R.color.box_snapp_services_header_titles_text),
+                asset = asset,
+                modifier = Modifier.size(24.dp)
+            )
         }
     }
 }
@@ -60,11 +98,13 @@ fun HomeScreen(pointerState: MutableState<PointerState>) {
     val map = rememberMapViewWithLifecycle()
     val buttonState = remember { mutableStateOf(MapPointerMovingState.DRAGGING) }
     val zoomLevel = remember { 17f }
+    val context = ContextAmbient.current
     //Location of Tehran- Iran
     Stack {
+
         AndroidView({ map }) { mapView ->
             mapView.getMapAsync {
-                if (pointerState.value !is PointerState.PICKED) {
+                if (pointerState.value !is PICKED) {
 
                     it.animateCamera(
                         CameraUpdateFactory.newLatLngZoom(
@@ -81,7 +121,32 @@ fun HomeScreen(pointerState: MutableState<PointerState>) {
                 }
             }
         }
-        if (pointerState.value !is PointerState.PICKED) {
+        IconButton(
+            Modifier.padding(top = 16.dp, start = 16.dp).gravity(Alignment.TopStart),
+            imageResource(id = R.drawable.ic_flight_user)
+        ) {
+            Toast.makeText(context, "Not implemented yet, Create a PR! ;)", Toast.LENGTH_LONG)
+                .show()
+        }
+        IconButton(
+            Modifier.padding(top = 16.dp, end = 16.dp).gravity(Alignment.TopEnd),
+            imageResource(id = R.drawable.ic_arrow_forward)
+        ) {
+            Toast.makeText(context, "Not implemented yet, Create a PR! ;)", Toast.LENGTH_LONG)
+                .show()
+        }
+        TabRow(
+            selectedTabIndex = 0,
+            Modifier.width(88.dp).gravity(Alignment.TopCenter).padding(top = 16.dp)
+        ) {
+            Tab(selected = true, onClick = {}) {
+                Text(text = "Hi")
+            }
+            Tab(selected = true, onClick = {}) {
+                Text(text = "Bye")
+            }
+        }
+        if (pointerState.value !is PICKED) {
             AnimatedMapPointer(
                 modifier = Modifier.gravity(Alignment.Center).padding(bottom = 52.dp),
                 buttonState,
@@ -93,22 +158,22 @@ fun HomeScreen(pointerState: MutableState<PointerState>) {
                     pointerState.value.initialLocation = target
                     val marker = it.addMarker(
                         MarkerOptions().position(target)
-                            .icon(BitmapDescriptorFactory.fromResource(if (pointerState.value is PointerState.ORIGIN) R.drawable.ic_location_marker_origin else R.drawable.ic_location_marker_destination))
+                            .icon(BitmapDescriptorFactory.fromResource(if (pointerState.value is ORIGIN) R.drawable.ic_location_marker_origin else R.drawable.ic_location_marker_destination))
                     )
                     pointerState.value =
                         when (pointerState.value) {
-                            is PointerState.ORIGIN -> PointerState.DESTINATION(
-                                (pointerState.value as PointerState.ORIGIN).initialLocation,
+                            is ORIGIN -> DESTINATION(
+                                (pointerState.value as ORIGIN).initialLocation,
                                 marker
                             )
-                            is PointerState.DESTINATION -> PointerState.PICKED(
+                            is DESTINATION -> PICKED(
                                 pointerState.value.initialLocation,
-                                (pointerState.value as PointerState.DESTINATION).originSelectedMarker,
+                                (pointerState.value as DESTINATION).originSelectedMarker,
                                 marker
                             )
-                            else -> PointerState.ORIGIN(pointerState.value.initialLocation)
+                            else -> ORIGIN(pointerState.value.initialLocation)
                         }
-                    if (pointerState.value !is PointerState.PICKED) {
+                    if (pointerState.value !is PICKED) {
                         val rand = Random.nextBoolean()
                         val xRand = Random.nextInt(150, 300).toFloat()
                         val yRand = Random.nextInt(150, 300).toFloat()
@@ -125,9 +190,9 @@ fun HomeScreen(pointerState: MutableState<PointerState>) {
             }
         }
     }
-    if (pointerState.value is PointerState.CLEAR) {
+    if (pointerState.value is CLEAR) {
         map.getMapAsync { it.clear() }
-        pointerState.value = PointerState.ORIGIN(pointerState.value.initialLocation)
+        pointerState.value = ORIGIN(pointerState.value.initialLocation)
     }
 }
 
@@ -155,7 +220,7 @@ fun MapPointer(
     modifier: Modifier = Modifier,
     transitionState: TransitionState?,
     pointerState: State<PointerState> = mutableStateOf(
-        PointerState.ORIGIN(
+        ORIGIN(
             LatLng(
                 "35.6892".toDouble(),
                 "51.3890".toDouble()
@@ -172,7 +237,7 @@ fun MapPointer(
                 .gravity(Alignment.BottomCenter)
         )
         Image(
-            asset = imageResource(id = if (pointerState.value is PointerState.ORIGIN) R.drawable.ic_location_pointer_origin else R.drawable.ic_location_pointer_destination),
+            asset = imageResource(id = if (pointerState.value is ORIGIN) R.drawable.ic_location_pointer_origin else R.drawable.ic_location_pointer_destination),
             modifier = Modifier
                 .padding(bottom = transitionState!![pointerPaddingProp]).clickable(
                     onClick =
@@ -183,15 +248,6 @@ fun MapPointer(
     }
 
 }
-//
-//
-//@Preview(showBackground = true)
-//@Composable
-//fun DefaultPreview() {
-//    SnappComposeTheme {
-//        HomeScreen()
-//    }
-//}
 
 enum class MapPointerMovingState {
     IDLE, DRAGGING
@@ -207,7 +263,7 @@ fun AnimatedMapPointer(
     modifier: Modifier = Modifier,
     buttonMovingState: State<MapPointerMovingState> = mutableStateOf(MapPointerMovingState.IDLE),
     pointerState: State<PointerState> = mutableStateOf(
-        PointerState.ORIGIN(
+        ORIGIN(
             LatLng(
                 "35.6892".toDouble(),
                 "51.3890".toDouble()
