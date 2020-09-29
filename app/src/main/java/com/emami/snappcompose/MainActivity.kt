@@ -13,6 +13,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Stack
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -43,7 +44,7 @@ class MainActivity : AppCompatActivity() {
 @Composable
 fun HomeScreen() {
     val map = rememberMapViewWithLifecycle()
-    val buttonState = remember { mutableStateOf(MapPointerState.IDLE) }
+    val buttonState = remember { mutableStateOf(MapPointerState.DRAGGING) }
 
     //Location of Tehran- Iran
     val position = LatLng("35.6892".toDouble(), "51.3890".toDouble())
@@ -55,6 +56,13 @@ fun HomeScreen() {
                         position, 15.0f
                     )
                 )
+                //Though its strange, i had to swap..
+                it.setOnCameraMoveStartedListener {
+                    buttonState.value = MapPointerState.IDLE
+                }
+                it.setOnCameraIdleListener {
+                    buttonState.value = MapPointerState.DRAGGING
+                }
             }
         }
         //TODO add marker animation
@@ -67,30 +75,33 @@ fun HomeScreen() {
                     MarkerOptions().position(target)
                         .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_location_marker_start))
                 )
-                it.setOnCameraMoveStartedListener {
-                    buttonState.value = MapPointerState.DRAGGING
-                }
-                it.setOnCameraIdleListener {
-                    buttonState.value = MapPointerState.IDLE
-                }
+
             }
         }
     }
 }
 
-//TODO animate on drag
-//TODO remove click ripple
 @Composable
-fun MapPointer(modifier: Modifier = Modifier, state: TransitionState?, onClick: () -> Unit) {
-    Stack(modifier) {
+fun MapPointer(
+    modifier: Modifier = Modifier,
+    transitionState: TransitionState?,
+    onClick: () -> Unit
+) {
+    Stack(modifier.wrapContentWidth()) {
         Box(
             shape = CircleShape, backgroundColor = Color.Gray.copy(alpha = .3f),
-            modifier = Modifier.size(state!![width]).gravity(Alignment.BottomCenter)
+            modifier = Modifier.padding(top = transitionState!![circlePaddingProp])
+                .size(transitionState!![circleSizeProp])
+                .gravity(Alignment.BottomCenter)
+
         )
         Image(
             asset = imageResource(id = R.drawable.ic_location_start_pointer),
             modifier = Modifier
-                .clickable(onClick = onClick, indication = null)
+                .padding(bottom = transitionState!![pointerPaddingProp]).clickable(
+                    onClick =
+                    onClick, indication = null
+                )
                 .size(32.dp, 64.dp),
         )
     }
@@ -110,7 +121,9 @@ enum class MapPointerState {
     IDLE, DRAGGING
 }
 
-val width = DpPropKey()
+val circleSizeProp = DpPropKey()
+val circlePaddingProp = DpPropKey()
+val pointerPaddingProp = DpPropKey()
 
 @Preview
 @Composable
@@ -121,17 +134,25 @@ fun AnimatedMapPointer(
 ) {
     val transitionDefinition = transitionDefinition<MapPointerState> {
         state(MapPointerState.IDLE) {
-            this[width] = 24.dp
+            this[circleSizeProp] = 16.dp
+            this[circlePaddingProp] = 0.dp
+            this[pointerPaddingProp] = 0.dp
         }
         state(MapPointerState.DRAGGING) {
-            this[width] = 32.dp
+            this[circleSizeProp] = 24.dp
+            this[circlePaddingProp] = 4.dp
+            this[pointerPaddingProp] = 16.dp
         }
         transition(fromState = MapPointerState.IDLE, toState = MapPointerState.DRAGGING) {
-            width using tween(durationMillis = 200)
+            circleSizeProp using tween(durationMillis = 100)
+            circlePaddingProp using tween(durationMillis = 100)
+            pointerPaddingProp using tween(durationMillis = 100)
         }
 
         transition(MapPointerState.DRAGGING to MapPointerState.IDLE) {
-            width using tween(durationMillis = 200)
+            circleSizeProp using tween(durationMillis = 100)
+            circlePaddingProp using tween(durationMillis = 100)
+            pointerPaddingProp using tween(durationMillis = 100)
         }
     }
     val toState = if (buttonState.value == MapPointerState.IDLE) {
@@ -146,7 +167,7 @@ fun AnimatedMapPointer(
         toState = toState
     )
 
-    MapPointer(modifier = modifier, state = state) {
+    MapPointer(modifier = modifier, transitionState = state) {
         onClick()
 
     }
