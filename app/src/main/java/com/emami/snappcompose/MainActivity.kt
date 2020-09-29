@@ -64,51 +64,65 @@ fun HomeScreen(pointerState: MutableState<PointerState>) {
     Stack {
         AndroidView({ map }) { mapView ->
             mapView.getMapAsync {
+                if (pointerState.value !is PointerState.PICKED) {
 
-                it.animateCamera(
-                    CameraUpdateFactory.newLatLngZoom(
-                        pointerState.value.initialLocation, zoomLevel
+                    it.animateCamera(
+                        CameraUpdateFactory.newLatLngZoom(
+                            pointerState.value.initialLocation, zoomLevel
+                        )
                     )
-                )
-                //Though its strange, i had to swap..
-                it.setOnCameraMoveStartedListener {
-                    buttonState.value = MapPointerMovingState.IDLE
-                }
-                it.setOnCameraIdleListener {
-                    buttonState.value = MapPointerMovingState.DRAGGING
+                    //Though its strange, i had to swap..
+                    it.setOnCameraMoveStartedListener {
+                        buttonState.value = MapPointerMovingState.IDLE
+                    }
+                    it.setOnCameraIdleListener {
+                        buttonState.value = MapPointerMovingState.DRAGGING
+                    }
                 }
             }
         }
-        AnimatedMapPointer(
-            modifier = Modifier.gravity(Alignment.Center).padding(bottom = 52.dp),
-            buttonState,
-            pointerState = pointerState
-        ) {
+        if (pointerState.value !is PointerState.PICKED) {
+            AnimatedMapPointer(
+                modifier = Modifier.gravity(Alignment.Center).padding(bottom = 52.dp),
+                buttonState,
+                pointerState = pointerState
+            ) {
 
-            map.getMapAsync {
-                val target = it.cameraPosition.target
-                pointerState.value.initialLocation = target
-                val marker = it.addMarker(
-                    MarkerOptions().position(target)
-                        .icon(BitmapDescriptorFactory.fromResource(if (pointerState.value is PointerState.ORIGIN) R.drawable.ic_location_marker_origin else R.drawable.ic_location_marker_destination))
-                )
-                val rand = Random.nextBoolean()
-                val xRand = Random.nextInt(150, 300).toFloat()
-                val yRand = Random.nextInt(150, 300).toFloat()
-                it.moveCamera(
-                    CameraUpdateFactory.scrollBy(
-                        if (rand) xRand * 1f else xRand * -1f,
-                        if (!rand) yRand * 1f else yRand * -1f
+                map.getMapAsync {
+                    val target = it.cameraPosition.target
+                    pointerState.value.initialLocation = target
+                    val marker = it.addMarker(
+                        MarkerOptions().position(target)
+                            .icon(BitmapDescriptorFactory.fromResource(if (pointerState.value is PointerState.ORIGIN) R.drawable.ic_location_marker_origin else R.drawable.ic_location_marker_destination))
                     )
-                )
-                it.animateCamera(CameraUpdateFactory.zoomBy(-0.5f))
-                pointerState.value =
-                    if (pointerState.value is PointerState.ORIGIN) PointerState.DESTINATION(
-                        (pointerState.value as PointerState.ORIGIN).initialLocation,
-                        marker
-                    ) else PointerState.ORIGIN(LatLng("35.6892".toDouble(), "51.3890".toDouble()))
-            }
+                    pointerState.value =
+                        when (pointerState.value) {
+                            is PointerState.ORIGIN -> PointerState.DESTINATION(
+                                (pointerState.value as PointerState.ORIGIN).initialLocation,
+                                marker
+                            )
+                            is PointerState.DESTINATION -> PointerState.PICKED(
+                                pointerState.value.initialLocation,
+                                (pointerState.value as PointerState.DESTINATION).originSelectedMarker,
+                                marker
+                            )
+                            else -> PointerState.ORIGIN(pointerState.value.initialLocation)
+                        }
+                    if (pointerState.value !is PointerState.PICKED) {
+                        val rand = Random.nextBoolean()
+                        val xRand = Random.nextInt(150, 300).toFloat()
+                        val yRand = Random.nextInt(150, 300).toFloat()
+                        it.moveCamera(
+                            CameraUpdateFactory.scrollBy(
+                                if (rand) xRand * 1f else xRand * -1f,
+                                if (!rand) yRand * 1f else yRand * -1f
+                            )
+                        )
+                    }
+                    it.animateCamera(CameraUpdateFactory.zoomBy(-0.5f))
+                }
 
+            }
         }
     }
     if (pointerState.value is PointerState.CLEAR) {
@@ -124,7 +138,7 @@ fun HomeScreen(pointerState: MutableState<PointerState>) {
  */
 sealed class PointerState(var initialLocation: LatLng) {
     class ORIGIN(initialLocation: LatLng) : PointerState(initialLocation)
-    class DESTINATION(initialLocation: LatLng, originSelectedMarker: Marker) :
+    class DESTINATION(initialLocation: LatLng, val originSelectedMarker: Marker) :
         PointerState(initialLocation)
 
     class PICKED(
