@@ -11,9 +11,9 @@ import androidx.compose.animation.transition
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.Surface
-import androidx.compose.material.Tab
-import androidx.compose.material.TabRow
+import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.material.*
+import androidx.compose.material.TabConstants.defaultTabIndicatorOffset
 import androidx.compose.material.ripple.RippleIndication
 import androidx.compose.runtime.*
 import androidx.compose.runtime.State
@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.ContextAmbient
 import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.imageResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.ui.tooling.preview.Preview
@@ -95,6 +96,20 @@ fun IconButton(
 }
 
 @Composable
+fun MyIndicator(
+    modifier: Modifier = Modifier,
+    height: Dp = TabConstants.DefaultIndicatorHeight,
+    color: Color = contentColor()
+) {
+    Box(
+        shape = CircleShape, modifier = modifier
+            .fillMaxWidth()
+            .fillMaxHeight()
+            .background(color = color)
+    )
+}
+
+@Composable
 fun HomeScreen(pointerState: MutableState<PointerState>) {
     val map = rememberMapViewWithLifecycle()
     val buttonState = remember { mutableStateOf(MapPointerMovingState.DRAGGING) }
@@ -136,23 +151,7 @@ fun HomeScreen(pointerState: MutableState<PointerState>) {
             Toast.makeText(context, "Not implemented yet, Create a PR! ;)", Toast.LENGTH_LONG)
                 .show()
         }
-        val selectedIndex = remember { mutableStateOf(0) }
-        TabRow(
-            selectedTabIndex = selectedIndex.value,
-            modifier = Modifier.padding(top = 16.dp).width(200.dp).height(56.dp)
-                .gravity(Alignment.TopCenter),
-        ) {
-            Tab(
-                text = { Text("For Me") },
-                selected = selectedIndex.value == 0,
-                onClick = { selectedIndex.value = 0 }
-            )
-            Tab(
-                text = { Text("For Else") },
-                selected = selectedIndex.value == 1,
-                onClick = { selectedIndex.value = 1 }
-            )
-        }
+
         if (pointerState.value !is PICKED) {
             AnimatedMapPointer(
                 modifier = Modifier.gravity(Alignment.Center).padding(bottom = 52.dp),
