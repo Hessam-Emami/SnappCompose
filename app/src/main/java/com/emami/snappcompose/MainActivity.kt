@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageAsset
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.platform.ContextAmbient
 import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.res.colorResource
@@ -135,16 +136,22 @@ fun HomeScreen(pointerState: MutableState<PointerState>) {
             Toast.makeText(context, "Not implemented yet, Create a PR! ;)", Toast.LENGTH_LONG)
                 .show()
         }
+        val selectedIndex = remember { mutableStateOf(0) }
         TabRow(
-            selectedTabIndex = 0,
-            Modifier.width(88.dp).gravity(Alignment.TopCenter).padding(top = 16.dp)
+            selectedTabIndex = selectedIndex.value,
+            modifier = Modifier.padding(top = 16.dp).width(200.dp).height(56.dp)
+                .gravity(Alignment.TopCenter),
         ) {
-            Tab(selected = true, onClick = {}) {
-                Text(text = "Hi")
-            }
-            Tab(selected = true, onClick = {}) {
-                Text(text = "Bye")
-            }
+            Tab(
+                text = { Text("For Me") },
+                selected = selectedIndex.value == 0,
+                onClick = { selectedIndex.value = 0 }
+            )
+            Tab(
+                text = { Text("For Else") },
+                selected = selectedIndex.value == 1,
+                onClick = { selectedIndex.value = 1 }
+            )
         }
         if (pointerState.value !is PICKED) {
             AnimatedMapPointer(
