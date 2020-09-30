@@ -152,48 +152,73 @@ fun HomeScreen(pointerState: MutableState<PointerState>) {
                 .show()
         }
 
+        val onClick = {
+            map.getMapAsync {
+                val target = it.cameraPosition.target
+                pointerState.value.initialLocation = target
+                val marker = it.addMarker(
+                    MarkerOptions().position(target)
+                        .icon(BitmapDescriptorFactory.fromResource(if (pointerState.value is ORIGIN) R.drawable.ic_location_marker_origin else R.drawable.ic_location_marker_destination))
+                )
+                pointerState.value =
+                    when (pointerState.value) {
+                        is ORIGIN -> DESTINATION(
+                            (pointerState.value as ORIGIN).initialLocation,
+                            marker
+                        )
+                        is DESTINATION -> PICKED(
+                            pointerState.value.initialLocation,
+                            (pointerState.value as DESTINATION).originSelectedMarker,
+                            marker
+                        )
+                        else -> ORIGIN(pointerState.value.initialLocation)
+                    }
+                if (pointerState.value !is PICKED) {
+                    val rand = Random.nextBoolean()
+                    val xRand = Random.nextInt(150, 300).toFloat()
+                    val yRand = Random.nextInt(150, 300).toFloat()
+                    it.moveCamera(
+                        CameraUpdateFactory.scrollBy(
+                            if (rand) xRand * 1f else xRand * -1f,
+                            if (!rand) yRand * 1f else yRand * -1f
+                        )
+                    )
+                }
+                it.animateCamera(CameraUpdateFactory.zoomBy(-0.5f))
+            }
+        }
+        Row(
+            Modifier.gravity(Alignment.BottomCenter).padding(
+                start = 16.dp,
+                end = 16.dp,
+                bottom = 16.dp
+            )
+        ) {
+            Button(
+                onClick = {
+                    if (pointerState.value !is PICKED) onClick()
+                }, backgroundColor = colorResource(id = R.color.box_colorAccent),
+                modifier = Modifier.fillMaxWidth().height(48.dp)
+            ) {
+                Text(
+                    text = if (pointerState.value is ORIGIN || pointerState.value is CLEAR) "تایید مبدا"
+                    else if (pointerState.value is DESTINATION) "تایید مقصد"
+                    else "در خواست اسنپ",
+                    color = Color.White
+                )
+            }
+            //TODO Add Favorite Button
+//            Button(onClick = {}) {
+//                Image(asset = imageResource(id = ))
+//            }
+        }
         if (pointerState.value !is PICKED) {
             AnimatedMapPointer(
                 modifier = Modifier.gravity(Alignment.Center).padding(bottom = 52.dp),
                 buttonState,
-                pointerState = pointerState
-            ) {
-
-                map.getMapAsync {
-                    val target = it.cameraPosition.target
-                    pointerState.value.initialLocation = target
-                    val marker = it.addMarker(
-                        MarkerOptions().position(target)
-                            .icon(BitmapDescriptorFactory.fromResource(if (pointerState.value is ORIGIN) R.drawable.ic_location_marker_origin else R.drawable.ic_location_marker_destination))
-                    )
-                    pointerState.value =
-                        when (pointerState.value) {
-                            is ORIGIN -> DESTINATION(
-                                (pointerState.value as ORIGIN).initialLocation,
-                                marker
-                            )
-                            is DESTINATION -> PICKED(
-                                pointerState.value.initialLocation,
-                                (pointerState.value as DESTINATION).originSelectedMarker,
-                                marker
-                            )
-                            else -> ORIGIN(pointerState.value.initialLocation)
-                        }
-                    if (pointerState.value !is PICKED) {
-                        val rand = Random.nextBoolean()
-                        val xRand = Random.nextInt(150, 300).toFloat()
-                        val yRand = Random.nextInt(150, 300).toFloat()
-                        it.moveCamera(
-                            CameraUpdateFactory.scrollBy(
-                                if (rand) xRand * 1f else xRand * -1f,
-                                if (!rand) yRand * 1f else yRand * -1f
-                            )
-                        )
-                    }
-                    it.animateCamera(CameraUpdateFactory.zoomBy(-0.5f))
-                }
-
-            }
+                pointerState = pointerState,
+                onClick = onClick
+            )
         }
     }
     if (pointerState.value is CLEAR) {
