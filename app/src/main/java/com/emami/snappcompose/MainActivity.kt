@@ -1,5 +1,6 @@
 package com.emami.snappcompose
 
+import android.content.Context
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -126,20 +127,7 @@ fun HomeScreen(pointerState: MutableState<PointerState>) {
         //--------------------End of the body
 
         //--------------------Start of the Header
-        IconButton(
-            Modifier.padding(top = 16.dp, start = 16.dp).gravity(Alignment.TopStart),
-            imageResource(id = R.drawable.ic_flight_user)
-        ) {
-            Toast.makeText(context, "Not implemented yet, Create a PR! ;)", Toast.LENGTH_LONG)
-                .show()
-        }
-        IconButton(
-            Modifier.padding(top = 16.dp, end = 16.dp).gravity(Alignment.TopEnd),
-            imageResource(id = R.drawable.ic_arrow_forward)
-        ) {
-            Toast.makeText(context, "Not implemented yet, Create a PR! ;)", Toast.LENGTH_LONG)
-                .show()
-        }
+            HomeHeader(context)
         //--------------------End of the Header
 
         val onClick = {
@@ -194,6 +182,25 @@ fun HomeScreen(pointerState: MutableState<PointerState>) {
     if (pointerState.value is CLEAR) {
         map.getMapAsync { it.clear() }
         pointerState.value = ORIGIN(pointerState.value.initialLocation)
+    }
+}
+@Composable
+fun HomeHeader(context: Context) {
+    Stack(Modifier.fillMaxWidth()) {
+        IconButton(
+            Modifier.padding(top = 16.dp, start = 16.dp).gravity(Alignment.TopStart),
+            imageResource(id = R.drawable.ic_flight_user)
+        ) {
+            Toast.makeText(context, "Not implemented yet, Create a PR! ;)", Toast.LENGTH_LONG)
+                .show()
+        }
+        IconButton(
+            Modifier.padding(top = 16.dp, end = 16.dp).gravity(Alignment.TopEnd),
+            imageResource(id = R.drawable.ic_arrow_forward)
+        ) {
+            Toast.makeText(context, "Not implemented yet, Create a PR! ;)", Toast.LENGTH_LONG)
+                .show()
+        }
     }
 }
 
