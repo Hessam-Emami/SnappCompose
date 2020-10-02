@@ -10,10 +10,11 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.transition
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.ColumnScope.gravity
+import androidx.compose.foundation.lazy.LazyRowFor
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.*
-import androidx.compose.material.TabConstants.defaultTabIndicatorOffset
 import androidx.compose.material.ripple.RippleIndication
 import androidx.compose.runtime.*
 import androidx.compose.runtime.State
@@ -22,17 +23,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageAsset
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.platform.ContextAmbient
 import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.imageResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.ui.tooling.preview.Preview
 import com.emami.snappcompose.PointerState.*
 import com.emami.snappcompose.ui.SnappComposeTheme
+import com.emami.snappcompose.util.rememberMapViewWithLifecycle
 import com.google.android.libraries.maps.CameraUpdateFactory
 import com.google.android.libraries.maps.model.BitmapDescriptorFactory
 import com.google.android.libraries.maps.model.LatLng
@@ -187,13 +190,17 @@ fun HomeScreen(pointerState: MutableState<PointerState>) {
                 it.animateCamera(CameraUpdateFactory.zoomBy(-0.5f))
             }
         }
-        Row(
+        Column(
             Modifier.gravity(Alignment.BottomCenter).padding(
                 start = 16.dp,
                 end = 16.dp,
                 bottom = 16.dp
             )
         ) {
+            if (pointerState.value is PICKED) {
+                RideDetailWidget()
+                Spacer(modifier = Modifier.size(16.dp))
+            }
             Button(
                 onClick = {
                     if (pointerState.value !is PICKED) onClick()
@@ -207,10 +214,6 @@ fun HomeScreen(pointerState: MutableState<PointerState>) {
                     color = Color.White
                 )
             }
-            //TODO Add Favorite Button
-//            Button(onClick = {}) {
-//                Image(asset = imageResource(id = ))
-//            }
         }
         if (pointerState.value !is PICKED) {
             AnimatedMapPointer(
@@ -344,5 +347,70 @@ fun AnimatedMapPointer(
     MapPointer(modifier = modifier, pointerState = pointerState, transitionState = state) {
         onClick()
 
+    }
+}
+
+@Composable
+fun RideDetailWidget() {
+    val list = listOf("اسنپ! (به صرفه)", "اسنب! بانوان", "اسنپ! باکس", "اسنپ! بایک")
+    Card {
+        Column {
+            LazyRowFor(items = list) {
+                RideTypeWidget(it)
+            }
+            Spacer(modifier = Modifier.size(16.dp))
+            Row() {
+                OutlinedButton(
+                    shape = CircleShape.copy(all = CornerSize(0.dp)),
+                    modifier = Modifier.fillMaxWidth(.5f),
+                    onClick = {}) {
+                    Text(text = "گزینه های سفر", color = colorResource(R.color.box_colorAccent))
+                    Spacer(modifier = Modifier.size(4.dp))
+                    Icon(
+                        tint = colorResource(id = R.color.box_colorAccent),
+                        asset = imageResource(id = R.drawable.ic_ride_options_enabled),
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+                OutlinedButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = CircleShape.copy(all = CornerSize(0.dp)),
+                    onClick = {}) {
+                    Text(text = "کد تخفیف", color = colorResource(R.color.box_colorAccent))
+                    Spacer(modifier = Modifier.size(4.dp))
+                    Icon(
+                        tint = colorResource(id = R.color.box_colorAccent),
+                        asset = imageResource(id = R.drawable.ic_ride_voucher_enabled),
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun RideTypeWidget(title: String) {
+    Column(horizontalGravity = Alignment.CenterHorizontally, modifier = Modifier.padding(top = 8.dp)) {
+        Image(modifier = Modifier.size(68.dp),asset = imageResource(id = R.drawable.ic_ride_for_friend_service))
+        Spacer(modifier = Modifier.size(8.dp))
+        Text(
+            modifier = Modifier.width(100.dp), softWrap = true, textAlign = TextAlign.Center,
+            text = title,
+            style = MaterialTheme.typography.caption,
+            maxLines = 2,
+            color = colorResource(R.color.box_snapp_services_header_titles_text)
+        )
+    }
+}
+
+
+@Composable
+@Preview
+fun RideTypeWidgetPreview() {
+    SnappComposeTheme {
+        Surface {
+            RideDetailWidget()
+        }
     }
 }

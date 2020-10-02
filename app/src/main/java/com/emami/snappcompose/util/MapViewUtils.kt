@@ -1,4 +1,4 @@
-package com.emami.snappcompose
+package com.emami.snappcompose.util
 
 import android.os.Bundle
 import androidx.compose.runtime.Composable
@@ -8,6 +8,7 @@ import androidx.compose.ui.platform.ContextAmbient
 import androidx.compose.ui.platform.LifecycleOwnerAmbient
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.emami.snappcompose.R
 import com.google.android.libraries.maps.MapView
 
 /**
