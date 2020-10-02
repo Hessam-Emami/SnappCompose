@@ -1,54 +1,25 @@
 package com.emami.snappcompose
 
-import android.content.Context
 import android.os.Bundle
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.animation.DpPropKey
-import androidx.compose.animation.core.TransitionState
-import androidx.compose.animation.core.transitionDefinition
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.transition
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRowFor
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.material.*
-import androidx.compose.material.ripple.RippleIndication
 import androidx.compose.runtime.*
-import androidx.compose.runtime.State
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageAsset
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.platform.ContextAmbient
 import androidx.compose.ui.platform.setContent
-import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.imageResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.ui.tooling.preview.Preview
 import com.emami.snappcompose.PointerState.*
+import com.emami.snappcompose.screen.HomeScreen
 import com.emami.snappcompose.ui.SnappComposeTheme
-import com.emami.snappcompose.util.rememberMapViewWithLifecycle
-import com.google.android.libraries.maps.CameraUpdateFactory
-import com.google.android.libraries.maps.model.BitmapDescriptorFactory
 import com.google.android.libraries.maps.model.LatLng
-import com.google.android.libraries.maps.model.Marker
-import com.google.android.libraries.maps.model.MarkerOptions
-import kotlin.random.Random
+
+val defaultLocation = LatLng("35.6892".toDouble(), "51.3890".toDouble())
+
 
 class MainActivity : AppCompatActivity() {
     private val pointerState: MutableState<PointerState> =
-        mutableStateOf(ORIGIN(LatLng("35.6892".toDouble(), "51.3890".toDouble())))
+        mutableStateOf(ORIGIN(defaultLocation))
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            SnappComposeTheme {
+            SnappComposeTheme() {
                 HomeScreen(pointerState = pointerState)
             }
 
@@ -67,176 +38,6 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-@Composable
-fun IconButton(
-    modifier: Modifier = Modifier,
-    asset: ImageAsset,
-    shape: Shape = CircleShape,
-    onClick: () -> Unit
-) {
-    Surface(
-        elevation = 4.dp,
-        modifier = modifier.size(56.dp).clickable(
-            onClick = onClick,
-            indication = RippleIndication(bounded = false, radius = 28.dp)
-        ),
-        shape = shape
-    ) {
-        Box(
-            backgroundColor = colorResource(id = R.color.white),
-            gravity = Alignment.Center,
-        ) {
-
-            Icon(
-                tint = colorResource(id = R.color.box_snapp_services_header_titles_text),
-                asset = asset,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-    }
-}
-
-@Composable
-fun HomeScreen(pointerState: MutableState<PointerState>) {
-    val map = rememberMapViewWithLifecycle()
-    val buttonState = remember { mutableStateOf(MapPointerMovingState.DRAGGING) }
-    val zoomLevel = remember { 17f }
-    val context = ContextAmbient.current
-    //Location of Tehran- Iran
-    Stack {
-
-        //--------------------Start of the body
-        AndroidView({ map }) { mapView ->
-            mapView.getMapAsync {
-                if (pointerState.value !is PICKED) {
-
-                    it.animateCamera(
-                        CameraUpdateFactory.newLatLngZoom(
-                            pointerState.value.initialLocation, zoomLevel
-                        )
-                    )
-                    it.setOnCameraMoveStartedListener {
-                        buttonState.value = MapPointerMovingState.IDLE
-                    }
-                    it.setOnCameraIdleListener {
-                        buttonState.value = MapPointerMovingState.DRAGGING
-                    }
-                }
-            }
-        }
-        //--------------------End of the body
-
-        //--------------------Start of the Header
-            HomeHeader(context)
-        //--------------------End of the Header
-
-        val onClick = {
-            map.getMapAsync {
-                val target = it.cameraPosition.target
-                pointerState.value.initialLocation = target
-                val marker = it.addMarker(
-                    MarkerOptions().position(target)
-                        .icon(BitmapDescriptorFactory.fromResource(if (pointerState.value is ORIGIN) R.drawable.ic_location_marker_origin else R.drawable.ic_location_marker_destination))
-                )
-                pointerState.value =
-                    when (pointerState.value) {
-                        is ORIGIN -> DESTINATION(
-                            (pointerState.value as ORIGIN).initialLocation,
-                            marker
-                        )
-                        is DESTINATION -> PICKED(
-                            pointerState.value.initialLocation
-                        )
-                        else -> ORIGIN(pointerState.value.initialLocation)
-                    }
-                if (pointerState.value !is PICKED) {
-                    val rand = Random.nextBoolean()
-                    val xRand = Random.nextInt(150, 300).toFloat()
-                    val yRand = Random.nextInt(150, 300).toFloat()
-                    it.moveCamera(
-                        CameraUpdateFactory.scrollBy(
-                            if (rand) xRand * 1f else xRand * -1f,
-                            if (!rand) yRand * 1f else yRand * -1f
-                        )
-                    )
-                }
-                it.animateCamera(CameraUpdateFactory.zoomBy(-0.5f))
-            }
-        }
-        //-------------------- Start of the Footer
-        HomeFooter(
-            Modifier.gravity(Alignment.BottomCenter), pointerState, onClick
-        )
-        //-------------------- End of the Footer
-
-        if (pointerState.value !is PICKED) {
-            AnimatedMapPointer(
-                modifier = Modifier.gravity(Alignment.Center).padding(bottom = 52.dp),
-                buttonState,
-                pointerState = pointerState,
-                onClick = onClick
-            )
-        }
-    }
-
-    if (pointerState.value is CLEAR) {
-        map.getMapAsync { it.clear() }
-        pointerState.value = ORIGIN(pointerState.value.initialLocation)
-    }
-}
-@Composable
-fun HomeHeader(context: Context) {
-    Stack(Modifier.fillMaxWidth()) {
-        IconButton(
-            Modifier.padding(top = 16.dp, start = 16.dp).gravity(Alignment.TopStart),
-            imageResource(id = R.drawable.ic_flight_user)
-        ) {
-            Toast.makeText(context, "Not implemented yet, Create a PR! ;)", Toast.LENGTH_LONG)
-                .show()
-        }
-        IconButton(
-            Modifier.padding(top = 16.dp, end = 16.dp).gravity(Alignment.TopEnd),
-            imageResource(id = R.drawable.ic_arrow_forward)
-        ) {
-            Toast.makeText(context, "Not implemented yet, Create a PR! ;)", Toast.LENGTH_LONG)
-                .show()
-        }
-    }
-}
-
-@Composable
-fun HomeFooter(
-    modifier: Modifier = Modifier,
-    pointerState: State<PointerState>,
-    onClick: () -> Unit
-) {
-    Column(
-        modifier.padding(
-            start = 16.dp,
-            end = 16.dp,
-            bottom = 16.dp
-        )
-    ) {
-        if (pointerState.value is PICKED) {
-            RideDetailWidget()
-            Spacer(modifier = Modifier.size(16.dp))
-        }
-        Button(
-            onClick = {
-                if (pointerState.value !is PICKED) onClick()
-            }, backgroundColor = colorResource(id = R.color.box_colorAccent),
-            modifier = Modifier.fillMaxWidth().height(48.dp)
-        ) {
-            Text(
-                text = if (pointerState.value is ORIGIN || pointerState.value is CLEAR) "تایید مبدا"
-                else if (pointerState.value is DESTINATION) "تایید مقصد"
-                else "در خواست اسنپ",
-                color = Color.White
-            )
-        }
-    }
-}
-
 /**
  * @property ORIGIN, when the user first starts to pick a location
  * @property DESTINATION, happens after Origin
@@ -244,7 +45,7 @@ fun HomeFooter(
  */
 sealed class PointerState(var initialLocation: LatLng) {
     class ORIGIN(initialLocation: LatLng) : PointerState(initialLocation)
-    class DESTINATION(initialLocation: LatLng, val originSelectedMarker: Marker) :
+    class DESTINATION(initialLocation: LatLng) :
         PointerState(initialLocation)
 
     class PICKED(
@@ -254,174 +55,9 @@ sealed class PointerState(var initialLocation: LatLng) {
     class CLEAR(initialLocation: LatLng) : PointerState(initialLocation = initialLocation)
 }
 
-@Composable
-fun MapPointer(
-    modifier: Modifier = Modifier,
-    transitionState: TransitionState?,
-    pointerState: State<PointerState> = mutableStateOf(
-        ORIGIN(
-            LatLng(
-                "35.6892".toDouble(),
-                "51.3890".toDouble()
-            )
-        )
-    ),
-    onClick: () -> Unit
-) {
-    Stack(modifier.wrapContentWidth()) {
-        Box(
-            shape = CircleShape, backgroundColor = Color.Gray.copy(alpha = .3f),
-            modifier = Modifier.padding(top = transitionState!![circlePaddingProp])
-                .size(transitionState!![circleSizeProp])
-                .gravity(Alignment.BottomCenter)
-        )
-        Image(
-            asset = imageResource(id = if (pointerState.value is ORIGIN) R.drawable.ic_location_pointer_origin else R.drawable.ic_location_pointer_destination),
-            modifier = Modifier
-                .padding(bottom = transitionState!![pointerPaddingProp]).clickable(
-                    onClick =
-                    onClick, indication = null
-                )
-                .size(32.dp, 64.dp),
-        )
-    }
-
-}
 
 enum class MapPointerMovingState {
     IDLE, DRAGGING
 }
 
-val circleSizeProp = DpPropKey()
-val circlePaddingProp = DpPropKey()
-val pointerPaddingProp = DpPropKey()
 
-@Preview
-@Composable
-fun AnimatedMapPointer(
-    modifier: Modifier = Modifier,
-    buttonMovingState: State<MapPointerMovingState> = mutableStateOf(MapPointerMovingState.IDLE),
-    pointerState: State<PointerState> = mutableStateOf(
-        ORIGIN(
-            LatLng(
-                "35.6892".toDouble(),
-                "51.3890".toDouble()
-            )
-        )
-    ),
-    onClick: () -> Unit = {}
-) {
-    val transitionDefinition = transitionDefinition<MapPointerMovingState> {
-        state(MapPointerMovingState.IDLE) {
-            this[circleSizeProp] = 16.dp
-            this[circlePaddingProp] = 0.dp
-            this[pointerPaddingProp] = 0.dp
-        }
-        state(MapPointerMovingState.DRAGGING) {
-            this[circleSizeProp] = 24.dp
-            this[circlePaddingProp] = 4.dp
-            this[pointerPaddingProp] = 16.dp
-        }
-        transition(
-            fromState = MapPointerMovingState.IDLE,
-            toState = MapPointerMovingState.DRAGGING
-        ) {
-            circleSizeProp using tween(durationMillis = 100)
-            circlePaddingProp using tween(durationMillis = 100)
-            pointerPaddingProp using tween(durationMillis = 100)
-        }
-
-        transition(MapPointerMovingState.DRAGGING to MapPointerMovingState.IDLE) {
-            circleSizeProp using tween(durationMillis = 100)
-            circlePaddingProp using tween(durationMillis = 100)
-            pointerPaddingProp using tween(durationMillis = 100)
-        }
-    }
-    val toState = if (buttonMovingState.value == MapPointerMovingState.IDLE) {
-        MapPointerMovingState.DRAGGING
-    } else {
-        MapPointerMovingState.IDLE
-    }
-
-    val state = transition(
-        definition = transitionDefinition,
-        initState = buttonMovingState.value,
-        toState = toState
-    )
-
-    MapPointer(modifier = modifier, pointerState = pointerState, transitionState = state) {
-        onClick()
-
-    }
-}
-
-@Composable
-fun RideDetailWidget() {
-    val list = listOf("اسنپ! (به صرفه)", "اسنب! بانوان", "اسنپ! باکس", "اسنپ! بایک")
-    Card {
-        Column {
-            LazyRowFor(items = list) {
-                RideTypeWidget(it)
-            }
-            Spacer(modifier = Modifier.size(16.dp))
-            Row() {
-                OutlinedButton(
-                    shape = CircleShape.copy(all = CornerSize(0.dp)),
-                    modifier = Modifier.fillMaxWidth(.5f),
-                    onClick = {}) {
-                    Text(text = "گزینه های سفر", color = colorResource(R.color.box_colorAccent))
-                    Spacer(modifier = Modifier.size(4.dp))
-                    Icon(
-                        tint = colorResource(id = R.color.box_colorAccent),
-                        asset = imageResource(id = R.drawable.ic_ride_options_enabled),
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-                OutlinedButton(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = CircleShape.copy(all = CornerSize(0.dp)),
-                    onClick = {}) {
-                    Text(text = "کد تخفیف", color = colorResource(R.color.box_colorAccent))
-                    Spacer(modifier = Modifier.size(4.dp))
-                    Icon(
-                        tint = colorResource(id = R.color.box_colorAccent),
-                        asset = imageResource(id = R.drawable.ic_ride_voucher_enabled),
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun RideTypeWidget(title: String) {
-    Column(
-        horizontalGravity = Alignment.CenterHorizontally,
-        modifier = Modifier.padding(top = 8.dp)
-    ) {
-        Image(
-            modifier = Modifier.size(68.dp),
-            asset = imageResource(id = R.drawable.ic_ride_for_friend_service)
-        )
-        Spacer(modifier = Modifier.size(8.dp))
-        Text(
-            modifier = Modifier.width(100.dp), softWrap = true, textAlign = TextAlign.Center,
-            text = title,
-            style = MaterialTheme.typography.caption,
-            maxLines = 2,
-            color = colorResource(R.color.box_snapp_services_header_titles_text)
-        )
-    }
-}
-
-
-@Composable
-@Preview
-fun RideTypeWidgetPreview() {
-    SnappComposeTheme {
-        Surface {
-            RideDetailWidget()
-        }
-    }
-}
