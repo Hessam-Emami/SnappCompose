@@ -10,7 +10,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.transition
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.ColumnScope.gravity
 import androidx.compose.foundation.lazy.LazyRowFor
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
@@ -28,9 +27,7 @@ import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.ui.tooling.preview.Preview
 import com.emami.snappcompose.PointerState.*
@@ -99,20 +96,6 @@ fun IconButton(
 }
 
 @Composable
-fun MyIndicator(
-    modifier: Modifier = Modifier,
-    height: Dp = TabConstants.DefaultIndicatorHeight,
-    color: Color = contentColor()
-) {
-    Box(
-        shape = CircleShape, modifier = modifier
-            .fillMaxWidth()
-            .fillMaxHeight()
-            .background(color = color)
-    )
-}
-
-@Composable
 fun HomeScreen(pointerState: MutableState<PointerState>) {
     val map = rememberMapViewWithLifecycle()
     val buttonState = remember { mutableStateOf(MapPointerMovingState.DRAGGING) }
@@ -121,6 +104,7 @@ fun HomeScreen(pointerState: MutableState<PointerState>) {
     //Location of Tehran- Iran
     Stack {
 
+        //--------------------Start of the body
         AndroidView({ map }) { mapView ->
             mapView.getMapAsync {
                 if (pointerState.value !is PICKED) {
@@ -130,7 +114,6 @@ fun HomeScreen(pointerState: MutableState<PointerState>) {
                             pointerState.value.initialLocation, zoomLevel
                         )
                     )
-                    //Though its strange, i had to swap..
                     it.setOnCameraMoveStartedListener {
                         buttonState.value = MapPointerMovingState.IDLE
                     }
@@ -140,6 +123,9 @@ fun HomeScreen(pointerState: MutableState<PointerState>) {
                 }
             }
         }
+        //--------------------End of the body
+
+        //--------------------Start of the Header
         IconButton(
             Modifier.padding(top = 16.dp, start = 16.dp).gravity(Alignment.TopStart),
             imageResource(id = R.drawable.ic_flight_user)
@@ -154,6 +140,7 @@ fun HomeScreen(pointerState: MutableState<PointerState>) {
             Toast.makeText(context, "Not implemented yet, Create a PR! ;)", Toast.LENGTH_LONG)
                 .show()
         }
+        //--------------------End of the Header
 
         val onClick = {
             map.getMapAsync {
@@ -170,9 +157,7 @@ fun HomeScreen(pointerState: MutableState<PointerState>) {
                             marker
                         )
                         is DESTINATION -> PICKED(
-                            pointerState.value.initialLocation,
-                            (pointerState.value as DESTINATION).originSelectedMarker,
-                            marker
+                            pointerState.value.initialLocation
                         )
                         else -> ORIGIN(pointerState.value.initialLocation)
                     }
@@ -190,31 +175,12 @@ fun HomeScreen(pointerState: MutableState<PointerState>) {
                 it.animateCamera(CameraUpdateFactory.zoomBy(-0.5f))
             }
         }
-        Column(
-            Modifier.gravity(Alignment.BottomCenter).padding(
-                start = 16.dp,
-                end = 16.dp,
-                bottom = 16.dp
-            )
-        ) {
-            if (pointerState.value is PICKED) {
-                RideDetailWidget()
-                Spacer(modifier = Modifier.size(16.dp))
-            }
-            Button(
-                onClick = {
-                    if (pointerState.value !is PICKED) onClick()
-                }, backgroundColor = colorResource(id = R.color.box_colorAccent),
-                modifier = Modifier.fillMaxWidth().height(48.dp)
-            ) {
-                Text(
-                    text = if (pointerState.value is ORIGIN || pointerState.value is CLEAR) "تایید مبدا"
-                    else if (pointerState.value is DESTINATION) "تایید مقصد"
-                    else "در خواست اسنپ",
-                    color = Color.White
-                )
-            }
-        }
+        //-------------------- Start of the Footer
+        HomeFooter(
+            Modifier.gravity(Alignment.BottomCenter), pointerState, onClick
+        )
+        //-------------------- End of the Footer
+
         if (pointerState.value !is PICKED) {
             AnimatedMapPointer(
                 modifier = Modifier.gravity(Alignment.Center).padding(bottom = 52.dp),
@@ -224,9 +190,43 @@ fun HomeScreen(pointerState: MutableState<PointerState>) {
             )
         }
     }
+
     if (pointerState.value is CLEAR) {
         map.getMapAsync { it.clear() }
         pointerState.value = ORIGIN(pointerState.value.initialLocation)
+    }
+}
+
+@Composable
+fun HomeFooter(
+    modifier: Modifier = Modifier,
+    pointerState: State<PointerState>,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier.padding(
+            start = 16.dp,
+            end = 16.dp,
+            bottom = 16.dp
+        )
+    ) {
+        if (pointerState.value is PICKED) {
+            RideDetailWidget()
+            Spacer(modifier = Modifier.size(16.dp))
+        }
+        Button(
+            onClick = {
+                if (pointerState.value !is PICKED) onClick()
+            }, backgroundColor = colorResource(id = R.color.box_colorAccent),
+            modifier = Modifier.fillMaxWidth().height(48.dp)
+        ) {
+            Text(
+                text = if (pointerState.value is ORIGIN || pointerState.value is CLEAR) "تایید مبدا"
+                else if (pointerState.value is DESTINATION) "تایید مقصد"
+                else "در خواست اسنپ",
+                color = Color.White
+            )
+        }
     }
 }
 
@@ -241,9 +241,7 @@ sealed class PointerState(var initialLocation: LatLng) {
         PointerState(initialLocation)
 
     class PICKED(
-        initialLocation: LatLng,
-        originSelectedMarker: Marker,
-        destinationSelectedMarker: Marker
+        initialLocation: LatLng
     ) : PointerState(initialLocation)
 
     class CLEAR(initialLocation: LatLng) : PointerState(initialLocation = initialLocation)
@@ -391,8 +389,14 @@ fun RideDetailWidget() {
 
 @Composable
 fun RideTypeWidget(title: String) {
-    Column(horizontalGravity = Alignment.CenterHorizontally, modifier = Modifier.padding(top = 8.dp)) {
-        Image(modifier = Modifier.size(68.dp),asset = imageResource(id = R.drawable.ic_ride_for_friend_service))
+    Column(
+        horizontalGravity = Alignment.CenterHorizontally,
+        modifier = Modifier.padding(top = 8.dp)
+    ) {
+        Image(
+            modifier = Modifier.size(68.dp),
+            asset = imageResource(id = R.drawable.ic_ride_for_friend_service)
+        )
         Spacer(modifier = Modifier.size(8.dp))
         Text(
             modifier = Modifier.width(100.dp), softWrap = true, textAlign = TextAlign.Center,
