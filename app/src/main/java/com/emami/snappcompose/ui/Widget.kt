@@ -24,6 +24,8 @@ import androidx.compose.ui.graphics.ImageAsset
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.imageResource
+import androidx.compose.ui.text.font.font
+import androidx.compose.ui.text.font.fontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.ui.tooling.preview.Preview
@@ -114,6 +116,7 @@ fun AnimatedMapPointer(
 
     }
 }
+
 @Composable
 fun MapPointer(
     modifier: Modifier = Modifier,
@@ -146,6 +149,35 @@ fun MapPointer(
         )
     }
 
+}
+
+@Composable
+@Preview
+fun PriceCalculatorWidget(
+    modifier: Modifier = Modifier,
+    price: State<Int> = mutableStateOf(15000)
+) {
+    Box(
+        shape = CircleShape,
+        backgroundColor = Color.White,
+        modifier = modifier.height(56.dp).width(120.dp), gravity = Alignment.Center,
+    ) {
+        Row {
+            Text(
+                text = "ریال",
+                style = MaterialTheme.typography.body2,
+                modifier = Modifier.gravity(Alignment.CenterVertically),
+                color = Color.Black.copy(alpha = .7f), fontFamily = fontFamily(
+                    font(R.font.box_iran_sans_mobile_light_fa)
+                )
+            )
+            Spacer(modifier = Modifier.padding(2.dp))
+            Text(
+                text = price.value.toString(),
+                style = MaterialTheme.typography.h6
+            )
+        }
+    }
 }
 
 @Composable
@@ -191,7 +223,13 @@ fun RideDetailWidget() {
                     shape = CircleShape.copy(all = CornerSize(0.dp)),
                     modifier = Modifier.fillMaxWidth(.5f),
                     onClick = {}) {
-                    Text(text = "گزینه های سفر", color = colorResource(R.color.box_colorAccent))
+                    Text(
+                        text = "گزینه های سفر",
+                        color = colorResource(R.color.box_colorAccent),
+                        fontFamily = fontFamily(
+                            font(R.font.box_iran_sans_mobile_bold_fa)
+                        )
+                    )
                     Spacer(modifier = Modifier.size(4.dp))
                     Icon(
                         tint = colorResource(id = R.color.box_colorAccent),
@@ -203,7 +241,13 @@ fun RideDetailWidget() {
                     modifier = Modifier.fillMaxWidth(),
                     shape = CircleShape.copy(all = CornerSize(0.dp)),
                     onClick = {}) {
-                    Text(text = "کد تخفیف", color = colorResource(R.color.box_colorAccent))
+                    Text(
+                        text = "کد تخفیف",
+                        color = colorResource(R.color.box_colorAccent),
+                        fontFamily = fontFamily(
+                            font(R.font.box_iran_sans_mobile_bold_fa)
+                        )
+                    )
                     Spacer(modifier = Modifier.size(4.dp))
                     Icon(
                         tint = colorResource(id = R.color.box_colorAccent),

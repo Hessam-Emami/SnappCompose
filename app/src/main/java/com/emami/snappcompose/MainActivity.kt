@@ -9,12 +9,12 @@ import com.emami.snappcompose.screen.HomeScreen
 import com.emami.snappcompose.ui.SnappComposeTheme
 import com.google.android.libraries.maps.model.LatLng
 
-val defaultLocation = LatLng("35.6892".toDouble(), "51.3890".toDouble())
+val DEFAULT_LOCATION = LatLng("35.6892".toDouble(), "51.3890".toDouble())
 
 
 class MainActivity : AppCompatActivity() {
     private val pointerState: MutableState<PointerState> =
-        mutableStateOf(ORIGIN(defaultLocation))
+        mutableStateOf(ORIGIN(DEFAULT_LOCATION))
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

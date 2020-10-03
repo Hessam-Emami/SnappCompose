@@ -2,9 +2,15 @@ package com.emami.snappcompose.screen
 
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.foundation.Box
 import androidx.compose.foundation.Text
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.RowScope.gravity
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Button
+import androidx.compose.material.Card
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
@@ -16,6 +22,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ContextAmbient
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.imageResource
+import androidx.compose.ui.res.loadFontResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.font
+import androidx.compose.ui.text.font.fontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.ui.tooling.preview.Preview
@@ -23,12 +36,17 @@ import com.emami.snappcompose.*
 import com.emami.snappcompose.R
 import com.emami.snappcompose.ui.AnimatedMapPointer
 import com.emami.snappcompose.ui.IconButton
+import com.emami.snappcompose.ui.PriceCalculatorWidget
 import com.emami.snappcompose.ui.RideDetailWidget
 import com.emami.snappcompose.util.rememberMapViewWithLifecycle
 import com.google.android.libraries.maps.CameraUpdateFactory
 import com.google.android.libraries.maps.MapView
 import com.google.android.libraries.maps.model.BitmapDescriptorFactory
 import com.google.android.libraries.maps.model.MarkerOptions
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.random.Random
 
 @Composable
@@ -37,12 +55,11 @@ fun HomeScreen(pointerState: MutableState<PointerState>) {
     val buttonState = remember { mutableStateOf(MapPointerMovingState.DRAGGING) }
     val zoomLevel = remember { 17f }
     val context = ContextAmbient.current
-    //Location of Tehran- Iran
     val onPointClick = {
         map.getMapAsync {
             val target = it.cameraPosition.target
             pointerState.value.initialLocation = target
-            val marker = it.addMarker(
+            it.addMarker(
                 MarkerOptions().position(target)
                     .icon(BitmapDescriptorFactory.fromResource(if (pointerState.value is PointerState.ORIGIN) R.drawable.ic_location_marker_origin else R.drawable.ic_location_marker_destination))
             )
@@ -81,7 +98,7 @@ fun HomeScreen(pointerState: MutableState<PointerState>) {
             map = map,
             onClick = onPointClick
         )
-        HomeHeader(context)
+        HomeHeader(context, pointerState)
         HomeFooter(Modifier.gravity(Alignment.BottomCenter), pointerState, onPointClick)
     }
 
@@ -131,24 +148,33 @@ fun HomeContent(
 
 @Composable
 @Preview
-fun HomeHeader(context: Context = ContextAmbient.current) {
-    Stack(Modifier.fillMaxWidth()) {
+fun HomeHeader(
+    context: Context = ContextAmbient.current,
+    pointerState: State<PointerState> = mutableStateOf(
+        PointerState.PICKED(DEFAULT_LOCATION)
+    )
+) {
+    Stack(Modifier.fillMaxWidth().padding(top = 16.dp)) {
         IconButton(
-            Modifier.padding(top = 16.dp, start = 16.dp).gravity(Alignment.TopStart),
+            Modifier.padding(start = 16.dp).gravity(Alignment.TopStart),
             imageResource(id = R.drawable.ic_flight_user)
         ) {
             Toast.makeText(context, "Not implemented yet, Create a PR! ;)", Toast.LENGTH_LONG)
                 .show()
         }
         IconButton(
-            Modifier.padding(top = 16.dp, end = 16.dp).gravity(Alignment.TopEnd),
+            Modifier.padding(end = 16.dp).gravity(Alignment.TopEnd),
             imageResource(id = R.drawable.ic_arrow_forward)
         ) {
             Toast.makeText(context, "Not implemented yet, Create a PR! ;)", Toast.LENGTH_LONG)
                 .show()
         }
+        if (pointerState.value is PointerState.PICKED) {
+            PriceCalculatorWidget(Modifier.gravity(Alignment.Center))
+        }
     }
 }
+
 
 @Composable
 fun HomeFooter(
@@ -177,7 +203,9 @@ fun HomeFooter(
                 text = if (pointerState.value is PointerState.ORIGIN || pointerState.value is PointerState.CLEAR) "تایید مبدا"
                 else if (pointerState.value is PointerState.DESTINATION) "تایید مقصد"
                 else "در خواست اسنپ",
-                color = Color.White
+                color = Color.White,fontFamily = fontFamily(
+                    font(R.font.box_iran_sans_mobile_bold_fa)
+                )
             )
         }
     }
