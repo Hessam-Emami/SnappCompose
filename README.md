@@ -13,9 +13,10 @@ A clone of Snapp, A ride-handling app using Jetpack Compose, Showcasing various 
 
 Want to contribute? Great!
 
-In order to build and work with the app put your google map's token as 
+In order to build and work with the app put your google map's token to your local.properties file as follows:
 >google.maps.key=YOUR_KEY
-to your local.properties file!
+
+
 
 All pull requests and comments are welcome!
 You can also check Todos section if you need a hint for contribution.
