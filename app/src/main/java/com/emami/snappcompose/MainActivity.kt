@@ -9,7 +9,8 @@ import com.emami.snappcompose.screen.HomeScreen
 import com.emami.snappcompose.ui.SnappComposeTheme
 import com.google.android.libraries.maps.model.LatLng
 
-val DEFAULT_LOCATION = LatLng("35.6892".toDouble(), "51.3890".toDouble())
+//Just a random location
+val DEFAULT_LOCATION = LatLng(35.7676325, 51.3192201)
 
 
 class MainActivity : AppCompatActivity() {
