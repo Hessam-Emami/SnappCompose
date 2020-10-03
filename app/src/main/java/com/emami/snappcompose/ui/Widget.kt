@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.font
 import androidx.compose.ui.text.font.fontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.ui.tooling.preview.Preview
 import com.emami.snappcompose.*
 import com.emami.snappcompose.R
@@ -274,7 +275,7 @@ fun RideTypeWidget(title: String) {
         Text(
             modifier = Modifier.width(100.dp), softWrap = true, textAlign = TextAlign.Center,
             text = title,
-            style = MaterialTheme.typography.caption,
+            style = MaterialTheme.typography.caption.copy(fontSize = 11.sp),
             maxLines = 2,
             color = colorResource(R.color.box_snapp_services_header_titles_text)
         )
