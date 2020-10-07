@@ -23,7 +23,7 @@ You can also check Todos section if you need a hint for contribution.
 
 
 ### Todos
-
+ - Implement Find My Location Feature/ Location Permission
  - Put the app state inside a ViewModel
  - Make it look more like the Real version of Snapp!
  - Improve text styles
