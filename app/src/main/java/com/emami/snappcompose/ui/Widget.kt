@@ -114,7 +114,6 @@ fun AnimatedMapPointer(
 
     MapPointer(modifier = modifier, pointerState = pointerState, transitionState = state) {
         onClick()
-
     }
 }
 
@@ -132,17 +131,26 @@ fun MapPointer(
     ),
     onClick: () -> Unit
 ) {
-    Stack(modifier.wrapContentWidth()) {
+    Box(
+        modifier = modifier
+            .wrapContentWidth(),
+        alignment = Alignment.TopStart
+    ) {
         Box(
-            shape = CircleShape, backgroundColor = Color.Gray.copy(alpha = .3f),
-            modifier = Modifier.padding(top = transitionState!![circlePaddingProp])
-                .size(transitionState!![circleSizeProp])
-                .gravity(Alignment.BottomCenter)
+            modifier = Modifier
+                .padding(top = transitionState!![circlePaddingProp])
+                .size(transitionState[circleSizeProp])
+                .align(Alignment.BottomCenter)
+                .background(Color.Gray.copy(alpha = .3f), CircleShape)
+                .wrapContentWidth()
         )
         Image(
-            asset = imageResource(id = if (pointerState.value is PointerState.ORIGIN) R.drawable.ic_location_pointer_origin else R.drawable.ic_location_pointer_destination),
+            asset = imageResource(
+                id = if (pointerState.value is PointerState.ORIGIN) R.drawable.ic_location_pointer_origin
+                else R.drawable.ic_location_pointer_destination
+            ),
             modifier = Modifier
-                .padding(bottom = transitionState!![pointerPaddingProp]).clickable(
+                .padding(bottom = transitionState[pointerPaddingProp]).clickable(
                     onClick =
                     onClick, indication = null
                 )
@@ -158,26 +166,26 @@ fun PriceCalculatorWidget(
     modifier: Modifier = Modifier,
     price: State<Int> = mutableStateOf(15000)
 ) {
-    Box(
-        shape = CircleShape,
-        backgroundColor = Color.White,
-        modifier = modifier.height(56.dp).width(120.dp), gravity = Alignment.Center,
+    Row(
+        modifier = modifier
+            .height(56.dp)
+            .width(120.dp)
+            .background(Color.White, CircleShape),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row {
-            Text(
-                text = "ریال",
-                style = MaterialTheme.typography.body2,
-                modifier = Modifier.gravity(Alignment.CenterVertically),
-                color = Color.Black.copy(alpha = .7f), fontFamily = fontFamily(
-                    font(R.font.box_iran_sans_mobile_light_fa)
-                )
+        Text(
+            text = "ریال",
+            style = MaterialTheme.typography.body2,
+            color = Color.Black.copy(alpha = .7f), fontFamily = fontFamily(
+                font(R.font.box_iran_sans_mobile_light_fa)
             )
-            Spacer(modifier = Modifier.padding(2.dp))
-            Text(
-                text = price.value.toString(),
-                style = MaterialTheme.typography.h6
-            )
-        }
+        )
+        Spacer(modifier = Modifier.padding(2.dp))
+        Text(
+            text = price.value.toString(),
+            style = MaterialTheme.typography.h6
+        )
     }
 }
 
@@ -190,21 +198,25 @@ fun IconButton(
 ) {
     Surface(
         elevation = 4.dp,
-        modifier = modifier.size(56.dp).clickable(
-            onClick = onClick,
-            indication = RippleIndication(bounded = false, radius = 28.dp)
-        ),
+        modifier = modifier
+            .size(56.dp)
+            .clickable(
+                onClick = onClick,
+                indication = RippleIndication(bounded = false, radius = 28.dp)
+            ),
         shape = shape
     ) {
-        Box(
-            backgroundColor = colorResource(id = R.color.white),
-            gravity = Alignment.Center,
+        Row(
+            modifier = Modifier
+                .background(colorResource(id = R.color.white)),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-
             Icon(
                 tint = colorResource(id = R.color.box_snapp_services_header_titles_text),
                 asset = asset,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier
+                    .size(24.dp)
             )
         }
     }
@@ -219,7 +231,7 @@ fun RideDetailWidget() {
                 RideTypeWidget(it)
             }
             Spacer(modifier = Modifier.size(16.dp))
-            Row() {
+            Row {
                 OutlinedButton(
                     shape = CircleShape.copy(all = CornerSize(0.dp)),
                     modifier = Modifier.fillMaxWidth(.5f),
@@ -264,8 +276,9 @@ fun RideDetailWidget() {
 @Composable
 fun RideTypeWidget(title: String) {
     Column(
-        horizontalGravity = Alignment.CenterHorizontally,
-        modifier = Modifier.padding(top = 8.dp)
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .padding(top = 8.dp)
     ) {
         Image(
             modifier = Modifier.size(68.dp),
@@ -273,7 +286,9 @@ fun RideTypeWidget(title: String) {
         )
         Spacer(modifier = Modifier.size(8.dp))
         Text(
-            modifier = Modifier.width(100.dp), softWrap = true, textAlign = TextAlign.Center,
+            modifier = Modifier.width(100.dp),
+            softWrap = true,
+            textAlign = TextAlign.Center,
             text = title,
             style = MaterialTheme.typography.caption.copy(fontSize = 11.sp),
             maxLines = 2,
@@ -281,5 +296,3 @@ fun RideTypeWidget(title: String) {
         )
     }
 }
-
-
