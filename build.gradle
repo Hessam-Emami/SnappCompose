@@ -1,9 +1,9 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
     ext {
-        compose_version = '1.0.0-alpha02'
+        compose_version = '1.0.0-alpha05'
     }
-    ext.kotlin_version = "1.4.0"
+    ext.kotlin_version = "1.4.10"
     repositories {
         google()
         jcenter()
@@ -22,8 +22,10 @@ allprojects {
         google()
         jcenter()
     }
-}
-
-task clean(type: Delete) {
-    delete rootProject.buildDir
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        kotlinOptions {
+            // Opt-in to experimental compose APIs
+            freeCompilerArgs += '-Xopt-in=kotlin.RequiresOptIn'
+        }
+    }
 }
