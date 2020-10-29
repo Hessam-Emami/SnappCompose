@@ -92,7 +92,11 @@ fun HomeScreen(pointerState: MutableState<PointerState>) {
             onClick = onPointClick
         )
         HomeHeader(context, pointerState)
-        HomeFooter(Modifier.align(Alignment.BottomCenter), pointerState, onPointClick)
+        HomeFooter(
+            Modifier.align(Alignment.BottomCenter),
+            pointerState,
+            onPointClick
+        )
     }
 
     if (pointerState.value is PointerState.CLEAR) {
@@ -162,7 +166,9 @@ fun HomeHeader(
                 .show()
         }
         IconButton(
-            Modifier.padding(end = 16.dp).align(Alignment.TopEnd),
+            Modifier
+                .padding(end = 16.dp)
+                .align(Alignment.TopEnd),
             imageResource(id = R.drawable.ic_arrow_forward)
         ) {
             Toast.makeText(context, "Not implemented yet, Create a PR! ;)", Toast.LENGTH_LONG)
@@ -173,7 +179,6 @@ fun HomeHeader(
         }
     }
 }
-
 
 @Composable
 fun HomeFooter(
@@ -195,14 +200,18 @@ fun HomeFooter(
         Button(
             onClick = {
                 if (pointerState.value !is PointerState.PICKED) onClick()
-            }, backgroundColor = colorResource(id = R.color.box_colorAccent),
-            modifier = Modifier.fillMaxWidth().height(48.dp)
+            },
+            backgroundColor = colorResource(id = R.color.box_colorAccent),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
         ) {
             Text(
                 text = if (pointerState.value is PointerState.ORIGIN || pointerState.value is PointerState.CLEAR) "تایید مبدا"
                 else if (pointerState.value is PointerState.DESTINATION) "تایید مقصد"
                 else "در خواست اسنپ",
-                color = Color.White, fontFamily = fontFamily(
+                color = Color.White,
+                fontFamily = fontFamily(
                     font(R.font.box_iran_sans_mobile_bold_fa)
                 )
             )

@@ -112,7 +112,11 @@ fun AnimatedMapPointer(
         toState = toState
     )
 
-    MapPointer(modifier = modifier, pointerState = pointerState, transitionState = state) {
+    MapPointer(
+        modifier = modifier,
+        pointerState = pointerState,
+        transitionState = state
+    ) {
         onClick()
     }
 }
