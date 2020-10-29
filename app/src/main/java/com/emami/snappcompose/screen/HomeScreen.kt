@@ -2,15 +2,9 @@ package com.emami.snappcompose.screen
 
 import android.content.Context
 import android.widget.Toast
-import androidx.compose.foundation.Box
 import androidx.compose.foundation.Text
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.RowScope.gravity
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Button
-import androidx.compose.material.Card
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
@@ -22,13 +16,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ContextAmbient
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.imageResource
-import androidx.compose.ui.res.loadFontResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.font
 import androidx.compose.ui.text.font.fontFamily
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.ui.tooling.preview.Preview
@@ -43,10 +32,6 @@ import com.google.android.libraries.maps.CameraUpdateFactory
 import com.google.android.libraries.maps.MapView
 import com.google.android.libraries.maps.model.BitmapDescriptorFactory
 import com.google.android.libraries.maps.model.MarkerOptions
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlin.random.Random
 
 @Composable
@@ -61,7 +46,13 @@ fun HomeScreen(pointerState: MutableState<PointerState>) {
             pointerState.value.initialLocation = target
             it.addMarker(
                 MarkerOptions().position(target)
-                    .icon(BitmapDescriptorFactory.fromResource(if (pointerState.value is PointerState.ORIGIN) R.drawable.ic_location_marker_origin else R.drawable.ic_location_marker_destination))
+                    .icon(
+                        BitmapDescriptorFactory
+                            .fromResource(
+                                if (pointerState.value is PointerState.ORIGIN) R.drawable.ic_location_marker_origin
+                                else R.drawable.ic_location_marker_destination
+                            )
+                    )
             )
             pointerState.value =
                 when (pointerState.value) {
@@ -88,10 +79,12 @@ fun HomeScreen(pointerState: MutableState<PointerState>) {
         }
     }
 
-    Stack {
-        //First child of the stack because content must be drawn below everything
+    Box {
+        //First child of the box because content must be drawn below everything
         HomeContent(
-            pointerModifier = Modifier.gravity(Alignment.Center).padding(bottom = 52.dp),
+            pointerModifier = Modifier
+                .align(Alignment.Center)
+                .padding(bottom = 52.dp),
             pointerState = pointerState,
             buttonState = buttonState,
             zoomLevel = zoomLevel,
@@ -99,7 +92,11 @@ fun HomeScreen(pointerState: MutableState<PointerState>) {
             onClick = onPointClick
         )
         HomeHeader(context, pointerState)
-        HomeFooter(Modifier.gravity(Alignment.BottomCenter), pointerState, onPointClick)
+        HomeFooter(
+            Modifier.align(Alignment.BottomCenter),
+            pointerState,
+            onPointClick
+        )
     }
 
     if (pointerState.value is PointerState.CLEAR) {
@@ -154,27 +151,34 @@ fun HomeHeader(
         PointerState.PICKED(DEFAULT_LOCATION)
     )
 ) {
-    Stack(Modifier.fillMaxWidth().padding(top = 16.dp)) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp)
+    ) {
         IconButton(
-            Modifier.padding(start = 16.dp).gravity(Alignment.TopStart),
+            Modifier
+                .padding(start = 16.dp)
+                .align(Alignment.TopStart),
             imageResource(id = R.drawable.ic_flight_user)
         ) {
             Toast.makeText(context, "Not implemented yet, Create a PR! ;)", Toast.LENGTH_LONG)
                 .show()
         }
         IconButton(
-            Modifier.padding(end = 16.dp).gravity(Alignment.TopEnd),
+            Modifier
+                .padding(end = 16.dp)
+                .align(Alignment.TopEnd),
             imageResource(id = R.drawable.ic_arrow_forward)
         ) {
             Toast.makeText(context, "Not implemented yet, Create a PR! ;)", Toast.LENGTH_LONG)
                 .show()
         }
         if (pointerState.value is PointerState.PICKED) {
-            PriceCalculatorWidget(Modifier.gravity(Alignment.Center))
+            PriceCalculatorWidget(Modifier.align(Alignment.Center))
         }
     }
 }
-
 
 @Composable
 fun HomeFooter(
@@ -196,14 +200,18 @@ fun HomeFooter(
         Button(
             onClick = {
                 if (pointerState.value !is PointerState.PICKED) onClick()
-            }, backgroundColor = colorResource(id = R.color.box_colorAccent),
-            modifier = Modifier.fillMaxWidth().height(48.dp)
+            },
+            backgroundColor = colorResource(id = R.color.box_colorAccent),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
         ) {
             Text(
                 text = if (pointerState.value is PointerState.ORIGIN || pointerState.value is PointerState.CLEAR) "تایید مبدا"
                 else if (pointerState.value is PointerState.DESTINATION) "تایید مقصد"
                 else "در خواست اسنپ",
-                color = Color.White,fontFamily = fontFamily(
+                color = Color.White,
+                fontFamily = fontFamily(
                     font(R.font.box_iran_sans_mobile_bold_fa)
                 )
             )
